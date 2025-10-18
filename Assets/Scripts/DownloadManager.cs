@@ -1,20 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using com.cyborgAssets.inspectorButtonPro;
 using UnityEngine;
-using UnityEngine.Networking;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using SQLite;
 using SRCustomLib;
-using SRTimestampLib;
-using SRTimestampLib.Models;
-using Unity.Template.VR;
 
 /// <summary>
 /// Note - needs to start disabled, to avoid double-initialization
@@ -51,8 +41,12 @@ public class DownloadManager : MonoBehaviour
         displayManager.EnableActions();
     }
 
-    public async void StartDownloading() {
-        if (_isDownloading) {
+    public void StartDownloading() => _ = StartDownloadingAsync();
+    
+    public async Task StartDownloadingAsync()
+    {
+        if (_isDownloading)
+        {
             logger.DebugLog("Already downloading!");
             return;
         }
@@ -60,7 +54,8 @@ public class DownloadManager : MonoBehaviour
         _isDownloading = true;
         displayManager.DisableActions("Downloading...");
 
-        try {
+        try
+        {
             var nowUtc = DateTime.UtcNow;
             var cutoffTimeUtc = downloadFilters.GetDateCutoffFromCurrentSelection(nowUtc);
             logger.DebugLog($"Using cutoff time (local) {cutoffTimeUtc.ToLocalTime()}");
@@ -89,10 +84,33 @@ public class DownloadManager : MonoBehaviour
         displayManager.EnableActions();
     }
 
+    /// <summary>
+    /// For testing, change some map timestamps to be incorrect
+    /// </summary>
+    [ProPlayButton]
+    public async void TestBreakMapTimestamps()
+    {
+        logger.DebugLog("Breaking map timestamp...");
+        
+        displayManager.DisableActions("Breaking Timestamps...");
+        
+        // First, try to fix timestamps with local file
+        logger.DebugLog("  Trying local fixes...");
+        await customFileManager.ApplyLocalTimestampMappings("test_incorrect_timestamp_mappings");
+
+        logger.DebugLog("  Refreshing SynthDB timestamps...");
+        await UpdateSynthDBTimestamps();
+
+        logger.DebugLog("Done");
+        displayManager.EnableActions();
+    }
+
+    [ProPlayButton]
+    public void FixMapTimestamps() => _ = FixMapTimestampsAsync();
+    
     /// Update local map timestamps to match the Z site published_at,
     /// to allow for correct sorting by timestamp in-game
-    [ProPlayButton]
-    public async void FixMapTimestamps()
+    public async Task FixMapTimestampsAsync()
     {
         logger.DebugLog("Fixing map timestamp...");
 
