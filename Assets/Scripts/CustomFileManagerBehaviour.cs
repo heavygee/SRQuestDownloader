@@ -47,12 +47,12 @@ public class CustomFileManagerBehaviour : MonoBehaviour
     /// <summary>
     /// Use locally cached timestamp info to fix map timestamps
     /// </summary>
-    public async Task ApplyLocalTimestampMappings()
+    public async Task ApplyLocalTimestampMappings(string mappingKey = "sr_timestamp_mapping")
     {
         // First, try to fix timestamps with local file
         // Note - getting this via addressables instead of the non-Unity lookup approach
         // var localMappings = _customFileManager.GetLocalTimestampMappings();
-        var localMappingsRaw = await AddressableUtil.LoadAndParseText<List<MapItem>>("sr_timestamp_mapping");
+        var localMappingsRaw = await AddressableUtil.LoadAndParseText<List<MapItem>>(mappingKey);
         if (localMappingsRaw == null || localMappingsRaw.Count == 0)
         {
             logger.ErrorLog("Failed to get mappings from file!");
