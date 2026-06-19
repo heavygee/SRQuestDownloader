@@ -65,6 +65,16 @@ Note - you may need to reimport songs in Synth Riders after applying this fix, t
 ## Play Synth Riders
 Closes this application and launches the Synth Riders application. I haven't tested what happens if Synth Riders isn't installed, but I doubt that'll be a common problem :P
 
+## Zero-Click Mode
+After you complete at least one successful **Fetch All/Filtered**, a **Zero-Click Mode** toggle appears on the main panel.
+
+When enabled, opening SRQuestDownloader will automatically:
+1. Check for and download any new custom maps published since your last fetch (Fetch button shows `Checking for new customs...`)
+2. After that finishes, show the result on the Fetch button (e.g. `3 new customs found`) and a 5 second countdown on **Play Synth Riders** (`Synthing: N` / `Tap to stay` on two lines)
+3. Launch Synth Riders and close this app
+
+Tap **Play Synth Riders** during the countdown to cancel the auto-launch and stay in the app. You can also turn **0-Click** off at any time. No other in-app interaction is required once the countdown finishes. Existing installs that already have a last-fetch timestamp unlock this toggle immediately.
+
 
 ---
 # More Details
