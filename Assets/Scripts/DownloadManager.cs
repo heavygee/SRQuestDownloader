@@ -15,12 +15,19 @@ public class DownloadManager : MonoBehaviour
     public SRLogHandler logger;
     public CustomFileManagerBehaviour customFileManager;
     public DownloadFilters downloadFilters;
+    public SynthLauncher synthLauncher;
+    public ZeroClickModeToggle zeroClickModeToggle;
 
     public bool UseZ = true;
     public bool UseSyn = true;
     public bool UseMagnet = true;
 
+    public const int ZeroClickCountdownSeconds = 5;
+
     private bool _isDownloading = false;
+    private bool _cancelZeroClickFlow = false;
+    private bool _launchCountdownActive = false;
+    private bool _zeroClickFlowInProgress = false;
     private MapRepo _customMapRepo;
     private DownloadManagerZ _downloadManagerZ;
     private DownloadManagerSyn _downloadManagerSyn;
@@ -34,42 +41,83 @@ public class DownloadManager : MonoBehaviour
 
     private async void OnEnable()
     {
-        displayManager.DisableActions("Initializing maps source...");
+        if (_zeroClickFlowInProgress)
+        {
+            logger.DebugLog("Zero-click flow already running; skipping duplicate OnEnable.");
+            return;
+        }
+
+        var zeroClickRequested = ZeroClickModeToggle.ShouldRunZeroClickFlow();
+        displayManager.DisableActions(zeroClickRequested ? "Checking for new customs..." : "Initializing maps source...");
 
         await _customMapRepo.Initialize();
-        
+
+        zeroClickModeToggle?.RefreshAvailability();
+
+        if (ZeroClickModeToggle.ShouldRunZeroClickFlow())
+        {
+            _zeroClickFlowInProgress = true;
+            try
+            {
+                await RunZeroClickFlowAsync();
+            }
+            finally
+            {
+                _zeroClickFlowInProgress = false;
+            }
+            return;
+        }
+
         displayManager.EnableActions();
     }
 
     public void StartDownloading() => _ = StartDownloadingAsync();
-    
-    public async Task StartDownloadingAsync()
+
+    public async Task<bool> StartDownloadingAsync(bool useLastFetchCutoffOnly = false, bool suppressEnableActions = false)
     {
         if (_isDownloading)
         {
             logger.DebugLog("Already downloading!");
-            return;
+            return false;
         }
 
         _isDownloading = true;
-        displayManager.DisableActions("Downloading...");
+
+        if (!suppressEnableActions)
+        {
+            displayManager.DisableActions("Downloading...");
+        }
+        else
+        {
+            displayManager.DisableActions("Checking for new customs...");
+        }
+
+        var success = false;
 
         try
         {
             var nowUtc = DateTime.UtcNow;
-            var cutoffTimeUtc = downloadFilters.GetDateCutoffFromCurrentSelection(nowUtc);
+            var cutoffTimeUtc = useLastFetchCutoffOnly
+                ? Preferences.GetLastDownloadedTime()
+                : downloadFilters.GetDateCutoffFromCurrentSelection(nowUtc);
             logger.DebugLog($"Using cutoff time (local) {cutoffTimeUtc.ToLocalTime()}");
-            
-            // TODO get difficulty info somewhere. For now, use all difficulties
+
             var difficultySelections = downloadFilters.GetDifficultiesEnabled();
             logger.DebugLog("Using difficulties " + String.Join(",", difficultySelections));
 
-            bool success = await _customMapRepo.TryDownloadWithFallbacks(cutoffTimeUtc, difficultySelections, Application.exitCancellationToken);
+            success = await _customMapRepo.TryDownloadWithFallbacks(cutoffTimeUtc, difficultySelections, Application.exitCancellationToken);
             if (success)
             {
                 Preferences.SetLastDownloadedTime(nowUtc);
+                Preferences.MarkInitialFetchCompleted();
                 customFileManager.SetLastDownloadedTime(nowUtc);
                 displayManager.UpdateLastFetchTime();
+                zeroClickModeToggle?.RefreshAvailability();
+
+                if (suppressEnableActions)
+                {
+                    displayManager.ShowZeroClickFetchResult(_customMapRepo.LastNewMapsFound);
+                }
             }
         }
         catch (Exception e)
@@ -81,7 +129,119 @@ public class DownloadManager : MonoBehaviour
 
         _isDownloading = false;
 
-        displayManager.EnableActions();
+        if (!suppressEnableActions)
+        {
+            displayManager.EnableActions();
+        }
+
+        return success;
+    }
+
+    public void CancelPendingZeroClickFlow()
+    {
+        _cancelZeroClickFlow = true;
+        logger.DebugLog("Zero-click auto-launch cancelled by user.");
+    }
+
+    public void OnLaunchSynthRidersButtonClicked()
+    {
+        if (_launchCountdownActive)
+        {
+            CancelPendingZeroClickFlow();
+            _launchCountdownActive = false;
+            displayManager.ResetLaunchSynthRidersButton();
+            displayManager.EnableActions();
+            return;
+        }
+
+        synthLauncher?.LaunchSynthRiders();
+    }
+
+    private async Task RunZeroClickFlowAsync()
+    {
+        logger.DebugLog("Zero-click phase 1/3: fetching new customs since last fetch...");
+
+        var fetchSucceeded = await RunZeroClickFetchAsync();
+        if (!ZeroClickModeToggle.ShouldRunZeroClickFlow())
+        {
+            logger.DebugLog("Zero-click mode disabled during fetch; staying in app.");
+            displayManager.EnableActions();
+            return;
+        }
+
+        if (!fetchSucceeded)
+        {
+            logger.ErrorLog("Zero-click mode: fetch failed; staying in app for manual retry.");
+            displayManager.EnableActions();
+            return;
+        }
+
+        logger.DebugLog("Zero-click phase 2/3: fetch complete; starting launch countdown.");
+        if (!await WaitForLaunchCountdownAsync())
+        {
+            logger.DebugLog("Zero-click auto-launch cancelled; staying in app.");
+            displayManager.EnableActions();
+            return;
+        }
+
+        logger.DebugLog("Zero-click phase 3/3: launching Synth Riders...");
+        if (synthLauncher != null)
+        {
+            synthLauncher.LaunchSynthRiders();
+        }
+        else
+        {
+            logger.ErrorLog("Zero-click mode: SynthLauncher reference missing!");
+            displayManager.EnableActions();
+        }
+    }
+
+    private async Task<bool> RunZeroClickFetchAsync()
+    {
+        while (_isDownloading)
+        {
+            await Task.Delay(100, Application.exitCancellationToken);
+        }
+
+        displayManager.ShowZeroClickFetchInProgress();
+        return await StartDownloadingAsync(useLastFetchCutoffOnly: true, suppressEnableActions: true);
+    }
+
+    private async Task<bool> WaitForLaunchCountdownAsync()
+    {
+        _cancelZeroClickFlow = false;
+        _launchCountdownActive = true;
+        zeroClickModeToggle?.SetInteractable(true);
+
+        try
+        {
+            for (var secondsRemaining = ZeroClickCountdownSeconds; secondsRemaining >= 1; secondsRemaining--)
+            {
+                if (_cancelZeroClickFlow || !ZeroClickModeToggle.ShouldRunZeroClickFlow())
+                {
+                    return false;
+                }
+
+                displayManager.ShowLaunchCountdown(secondsRemaining);
+                await Task.Delay(1000, Application.exitCancellationToken);
+            }
+
+            return !_cancelZeroClickFlow && ZeroClickModeToggle.ShouldRunZeroClickFlow();
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        finally
+        {
+            _launchCountdownActive = false;
+            zeroClickModeToggle?.SetInteractable(true);
+
+            if (_cancelZeroClickFlow || !ZeroClickModeToggle.ShouldRunZeroClickFlow())
+            {
+                displayManager.ResetLaunchSynthRidersButton();
+            }
+        }
     }
 
     /// <summary>
