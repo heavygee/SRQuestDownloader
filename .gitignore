@@ -68,3 +68,7 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+# Library build artifacts
+bin/
+obj/
+

@@ -7,6 +7,8 @@ using TMPro;
 using System;
 using System.IO;
 using SRTimestampLib;
+using Debug = UnityEngine.Debug;
+using SRLogHandler = SRQuestDownloader.SRLogHandler;
 
 public class LogManager : SRLogHandler
 {
@@ -18,6 +20,8 @@ public class LogManager : SRLogHandler
     private ConcurrentQueue<string> persistBuffer = new ConcurrentQueue<string>();
     private readonly DateTime startTime = DateTime.Now;
     [SerializeField] private DebugAppLogger alternateErrorHandler;
+
+    private SRTimestampLib.SRLogHandler _loggerLib = new();
 
 
     private void Awake()
@@ -122,7 +126,7 @@ public class LogManager : SRLogHandler
         string message;
         while (true) {
             if (persistBuffer.TryDequeue(out message)) {
-                await FileUtils.AppendToFile(message + "\n", logFile, alternateErrorHandler);
+                await FileUtils.AppendToFile(message + "\n", logFile, _loggerLib);
             }
             else {
                 break;

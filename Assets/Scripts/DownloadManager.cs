@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using com.cyborgAssets.inspectorButtonPro;
 using UnityEngine;
 using SRCustomLib;
+using SRTimestampLib;
 
 /// <summary>
 /// Note - needs to start disabled, to avoid double-initialization
@@ -12,7 +13,8 @@ using SRCustomLib;
 public class DownloadManager : MonoBehaviour
 {
     public DisplayManager displayManager;
-    public SRLogHandler logger;
+    public SRQuestDownloader.SRLogHandler logger;
+    public SRTimestampLib.SRLogHandler loggerLib;
     public CustomFileManagerBehaviour customFileManager;
     public DownloadFilters downloadFilters;
     public SynthLauncher synthLauncher;
@@ -22,21 +24,23 @@ public class DownloadManager : MonoBehaviour
     public bool UseSyn = true;
     public bool UseMagnet = true;
 
-    public const int ZeroClickCountdownSeconds = 5;
-
     private bool _isDownloading = false;
-    private bool _cancelZeroClickFlow = false;
-    private bool _launchCountdownActive = false;
-    private bool _zeroClickFlowInProgress = false;
     private MapRepo _customMapRepo;
     private DownloadManagerZ _downloadManagerZ;
     private DownloadManagerSyn _downloadManagerSyn;
+    
+    [SerializeField]
+    private float _zeroClickCountdownSeconds = 5f;
+    private bool _cancelZeroClickFlow = false;
+    private bool _launchCountdownActive = false;
+    private bool _zeroClickFlowInProgress = false;
+
 
     private void Awake()
     {
-        _customMapRepo = new MapRepo(logger, UseZ, UseSyn, UseMagnet, customFileManager.FileManager);
-        _downloadManagerZ = new DownloadManagerZ(logger, customFileManager.FileManager);
-        _downloadManagerSyn = new DownloadManagerSyn(logger, customFileManager.FileManager);
+        _customMapRepo = new MapRepo(loggerLib, UseZ, UseSyn, UseMagnet, customFileManager.FileManager);
+        _downloadManagerZ = new DownloadManagerZ(loggerLib, customFileManager.FileManager);
+        _downloadManagerSyn = new DownloadManagerSyn(loggerLib, customFileManager.FileManager);
     }
 
     private async void OnEnable()
@@ -105,7 +109,8 @@ public class DownloadManager : MonoBehaviour
             var difficultySelections = downloadFilters.GetDifficultiesEnabled();
             logger.DebugLog("Using difficulties " + String.Join(",", difficultySelections));
 
-            success = await _customMapRepo.TryDownloadWithFallbacks(cutoffTimeUtc, difficultySelections, Application.exitCancellationToken);
+            var result = await _customMapRepo.TryDownloadWithFallbacks(cutoffTimeUtc, difficultySelections, Application.exitCancellationToken);
+            success = result.Success;
             if (success)
             {
                 Preferences.SetLastDownloadedTime(nowUtc);
@@ -116,7 +121,7 @@ public class DownloadManager : MonoBehaviour
 
                 if (suppressEnableActions)
                 {
-                    displayManager.ShowZeroClickFetchResult(_customMapRepo.LastNewMapsFound);
+                    displayManager.ShowZeroClickFetchResult(result.NewMapsFound);
                 }
             }
         }
@@ -215,7 +220,7 @@ public class DownloadManager : MonoBehaviour
 
         try
         {
-            for (var secondsRemaining = ZeroClickCountdownSeconds; secondsRemaining >= 1; secondsRemaining--)
+            for (var secondsRemaining = _zeroClickCountdownSeconds; secondsRemaining >= 0; secondsRemaining--)
             {
                 if (_cancelZeroClickFlow || !ZeroClickModeToggle.ShouldRunZeroClickFlow())
                 {
@@ -223,7 +228,7 @@ public class DownloadManager : MonoBehaviour
                 }
 
                 displayManager.ShowLaunchCountdown(secondsRemaining);
-                await Task.Delay(1000, Application.exitCancellationToken);
+                await Task.Delay(100, Application.exitCancellationToken);
             }
 
             return !_cancelZeroClickFlow && ZeroClickModeToggle.ShouldRunZeroClickFlow();

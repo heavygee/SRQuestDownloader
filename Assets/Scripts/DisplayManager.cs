@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 using System.IO;
+using SRQuestDownloader;
 
 public class DisplayManager : MonoBehaviour
 {
@@ -70,52 +71,27 @@ public class DisplayManager : MonoBehaviour
     }
 
     public void ShowZeroClickFetchInProgress() {
-        FixTimestampsButton.interactable = false;
-        MoveDownloadsButton.interactable = false;
-        FetchMapsButton.interactable = false;
-        FetchMapsButtonText.fontStyle = FontStyles.Italic;
-        FetchMapsButtonText.SetText("Checking for new customs...");
+        DisableActions("Checking for new customs...");
         ResetLaunchSynthRidersButton();
     }
 
     public void ShowZeroClickFetchResult(int newMapsFound) {
-        FixTimestampsButton.interactable = false;
-        MoveDownloadsButton.interactable = false;
-        FetchMapsButton.interactable = false;
+        DisableActions(newMapsFound == 1 ? "1 new custom found" : $"{newMapsFound} new customs found");
         FetchMapsButtonText.fontStyle = FontStyles.Normal;
-        FetchMapsButtonText.SetText(FormatNewCustomsFoundText(newMapsFound));
     }
 
-    public void ShowLaunchCountdown(int secondsRemaining) {
+    public void ShowLaunchCountdown(float secondsRemaining) {
         FixTimestampsButton.interactable = false;
         MoveDownloadsButton.interactable = false;
-
-        if (LaunchSynthRidersButton == null || LaunchSynthRidersButtonText == null)
-        {
-            logger?.ErrorLog("Launch Synth Riders button references are missing; countdown UI cannot update.");
-            return;
-        }
 
         LaunchSynthRidersButton.interactable = true;
         LaunchSynthRidersButtonText.fontStyle = FontStyles.Italic;
-        LaunchSynthRidersButtonText.enableWordWrapping = true;
-        LaunchSynthRidersButtonText.SetText($"Synthing: {secondsRemaining}\nTap to stay");
-    }
-
-    private static string FormatNewCustomsFoundText(int newMapsFound) {
-        return newMapsFound == 1 ? "1 new custom found" : $"{newMapsFound} new customs found";
+        LaunchSynthRidersButtonText.SetText($"Synthing: {secondsRemaining:F1}\nTap to stay");
     }
 
     public void ResetLaunchSynthRidersButton() {
-        if (LaunchSynthRidersButton != null)
-        {
-            LaunchSynthRidersButton.interactable = true;
-        }
-
-        if (LaunchSynthRidersButtonText != null)
-        {
-            LaunchSynthRidersButtonText.fontStyle = FontStyles.Normal;
-            LaunchSynthRidersButtonText.SetText(LaunchSynthRidersLabel);
-        }
+        LaunchSynthRidersButton.interactable = true;
+        LaunchSynthRidersButtonText.fontStyle = FontStyles.Normal;
+        LaunchSynthRidersButtonText.SetText(LaunchSynthRidersLabel);
     }
 }

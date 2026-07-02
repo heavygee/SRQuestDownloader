@@ -4,6 +4,7 @@ using TMPro;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using SRQuestDownloader;
 
 /// Handles selecting download filters
 public class DownloadFilters : MonoBehaviour {

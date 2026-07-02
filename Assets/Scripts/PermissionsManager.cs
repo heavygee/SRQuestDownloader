@@ -13,6 +13,9 @@ public class PermissionsManager : MonoBehaviour
     [SerializeField] SRLogHandler logger;
     [SerializeField] PermissionsDialog permissionDialog;
     [SerializeField] private bool debugDenyPermission = false;
+
+    private SRTimestampLib.SRLogHandler _loggerLib = new();
+    
     private const string MAIN_SCENE = "MainScene";
     // https://developer.android.com/reference/android/provider/Settings#ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
     private const string ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION = "android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION";
@@ -121,9 +124,9 @@ public class PermissionsManager : MonoBehaviour
                 {
                     // Try to list out SR customs directory to check permission
                     var testPath = Path.Combine(FileUtils.SynthCustomContentDir, "permission_test");
-                    if (await FileUtils.WriteToFile(DateTime.Now.ToLongDateString(), testPath, logger)) {
+                    if (await FileUtils.WriteToFile(DateTime.Now.ToLongDateString(), testPath, _loggerLib)) {
                         logger.DebugLog("Permission not set as expected, but writing to customs directory works");
-                        FileUtils.DeleteFile(testPath, logger);
+                        FileUtils.DeleteFile(testPath, _loggerLib);
                         return true;
                     }
 

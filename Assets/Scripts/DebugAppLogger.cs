@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.IO;
+using SRQuestDownloader;
 
 /// Logger class that outputs to the debug log file given to the Application
 public class DebugAppLogger : SRLogHandler {

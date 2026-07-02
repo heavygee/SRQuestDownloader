@@ -1,3 +1,4 @@
+using SRQuestDownloader;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,6 +7,7 @@ using UnityEngine.UI;
 /// Optional zero-click mode: after the user completes one manual fetch, they can enable
 /// auto-fetch-on-launch followed by launching Synth Riders with no in-app interaction.
 /// </summary>
+[RequireComponent(typeof(Button))]
 public class ZeroClickModeToggle : MonoBehaviour
 {
     public TextMeshProUGUI Label;
@@ -36,11 +38,11 @@ public class ZeroClickModeToggle : MonoBehaviour
     public void RefreshAvailability()
     {
         bool available = Preferences.HasCompletedInitialFetch();
-        gameObject.SetActive(available);
 
         if (!available)
         {
             Preferences.SetZeroClickMode(false);
+            gameObject.SetActive(false);
             return;
         }
 
