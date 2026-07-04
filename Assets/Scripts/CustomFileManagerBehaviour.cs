@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using com.cyborgAssets.inspectorButtonPro;
 using JetBrains.Annotations;
+using SRQuestDownloader;
 using SRTimestampLib;
 using SRTimestampLib.Models;
 using Unity.Template.VR;
@@ -18,7 +19,7 @@ using Unity.Template.VR;
 public class CustomFileManagerBehaviour : MonoBehaviour
 {
     public DisplayManager displayManager;
-    public SRLogHandler logger;
+    public SRQDLogHandler logger;
     private CustomFileManager _customFileManager;
     public CustomFileManager FileManager => _customFileManager ??= new CustomFileManager(logger);
 

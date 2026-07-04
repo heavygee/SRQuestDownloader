@@ -10,7 +10,7 @@ using UnityEngine.UI;
 public class PermissionsDialog : MonoBehaviour
 {
     [SerializeField] GameObject[] buttons;
-    [SerializeField] SRLogHandler logger;
+    [SerializeField] SRQDLogHandler logger;
 
     void OnApplicationFocus(bool hasFocus)
     {

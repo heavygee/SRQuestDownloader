@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using SRQuestDownloader;
 using SRTimestampLib;
 using UnityEngine;
 using UnityEngine.Android;
@@ -10,11 +11,9 @@ using UnityEngine.SceneManagement;
 
 public class PermissionsManager : MonoBehaviour
 {
-    [SerializeField] SRLogHandler logger;
+    [SerializeField] SRQDLogHandler logger;
     [SerializeField] PermissionsDialog permissionDialog;
     [SerializeField] private bool debugDenyPermission = false;
-
-    private SRTimestampLib.SRLogHandler _loggerLib = new();
     
     private const string MAIN_SCENE = "MainScene";
     // https://developer.android.com/reference/android/provider/Settings#ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
@@ -124,9 +123,9 @@ public class PermissionsManager : MonoBehaviour
                 {
                     // Try to list out SR customs directory to check permission
                     var testPath = Path.Combine(FileUtils.SynthCustomContentDir, "permission_test");
-                    if (await FileUtils.WriteToFile(DateTime.Now.ToLongDateString(), testPath, _loggerLib)) {
+                    if (await FileUtils.WriteToFile(DateTime.Now.ToLongDateString(), testPath, logger)) {
                         logger.DebugLog("Permission not set as expected, but writing to customs directory works");
-                        FileUtils.DeleteFile(testPath, _loggerLib);
+                        FileUtils.DeleteFile(testPath, logger);
                         return true;
                     }
 

@@ -11,7 +11,7 @@ using UnityEngine.UI;
 public class ZeroClickModeToggle : MonoBehaviour
 {
     public TextMeshProUGUI Label;
-    public SRLogHandler logger;
+    public SRQDLogHandler logger;
     public DownloadManager downloadManager;
 
     private bool _isEnabled;

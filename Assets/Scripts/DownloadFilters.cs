@@ -9,7 +9,7 @@ using SRQuestDownloader;
 /// Handles selecting download filters
 public class DownloadFilters : MonoBehaviour {
     public TextMeshProUGUI TimeSelectionText;
-    public SRLogHandler logger;
+    public SRQDLogHandler logger;
     
     public DownloadFilterDifficulty[] difficultyFilters;
     

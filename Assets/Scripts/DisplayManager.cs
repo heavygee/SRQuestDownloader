@@ -19,7 +19,7 @@ public class DisplayManager : MonoBehaviour
     public Button MoveDownloadsButton;
     public Button LaunchSynthRidersButton;
     public TextMeshProUGUI LaunchSynthRidersButtonText;
-    public SRLogHandler logger;
+    public SRQDLogHandler logger;
 
     public const string LaunchSynthRidersLabel = "Play Synth Riders";
 

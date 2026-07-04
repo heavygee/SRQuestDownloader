@@ -6,7 +6,7 @@ using TMPro;
 
 public class SynthLauncher : MonoBehaviour
 {
-    public SRLogHandler logger;
+    public SRQDLogHandler logger;
 
     public void LaunchSynthRiders()
     {
