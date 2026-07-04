@@ -32,7 +32,7 @@ namespace SRQuestDownloader
         private DownloadManagerSyn _downloadManagerSyn;
         
         [SerializeField]
-        private float _zeroClickCountdownSeconds = 5f;
+        private int _zeroClickCountdownSeconds = 5;
         private bool _cancelZeroClickFlow = false;
         private bool _launchCountdownActive = false;
         private bool _zeroClickFlowInProgress = false;
@@ -222,7 +222,7 @@ namespace SRQuestDownloader
 
             try
             {
-                for (var secondsRemaining = _zeroClickCountdownSeconds; secondsRemaining >= 0; secondsRemaining--)
+                for (int secondsRemaining = _zeroClickCountdownSeconds; secondsRemaining >= 1; secondsRemaining--)
                 {
                     if (_cancelZeroClickFlow || !ZeroClickModeToggle.ShouldRunZeroClickFlow())
                     {
@@ -230,7 +230,7 @@ namespace SRQuestDownloader
                     }
 
                     displayManager.ShowLaunchCountdown(secondsRemaining);
-                    await Task.Delay(100, Application.exitCancellationToken);
+                    await Task.Delay(1000, Application.exitCancellationToken);
                 }
 
                 return !_cancelZeroClickFlow && ZeroClickModeToggle.ShouldRunZeroClickFlow();

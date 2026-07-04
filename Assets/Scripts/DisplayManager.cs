@@ -86,7 +86,7 @@ public class DisplayManager : MonoBehaviour
 
         LaunchSynthRidersButton.interactable = true;
         LaunchSynthRidersButtonText.fontStyle = FontStyles.Italic;
-        LaunchSynthRidersButtonText.SetText($"Synthing: {secondsRemaining:F1}\nTap to stay");
+        LaunchSynthRidersButtonText.SetText($"Synthing: {secondsRemaining}\nTap to stay");
     }
 
     public void ResetLaunchSynthRidersButton() {
