@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "com.cysharp.memorypack": "https://github.com/Cysharp/MemoryPack.git?path=src/MemoryPack.Unity/Assets/MemoryPack.Unity",
     "com.github-glitchenzo.nugetforunity": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
     "com.unity.addressables": "2.7.3",
     "com.unity.ai.navigation": "2.0.9",
